@@ -37,7 +37,7 @@ class PrenotazioneController extends Controller
 
         $validated = $request->validate([
             'tipo_rifiuto' => 'required|string|max:50',
-            'quantita' => 'required|numeric|min:0.1|max:10',
+            'quantita' => 'required|numeric|min:1|max:1000',
             'data_ritiro' => [
                 'required',
                 'date',
@@ -46,8 +46,8 @@ class PrenotazioneController extends Controller
             'note' => 'nullable|string|max:1000',
         ], [
             'data_ritiro.after' => 'La data del ritiro deve essere di almeno 2 giorni successiva alla data odierna.',
-            'quantita.max' => 'La quantità massima consentita è di 10 metri cubi.',
-            'quantita.min' => 'La quantità minima deve essere di almeno 0.1 metri cubi.'
+            'quantita.max' => 'La quantità massima consentita è di 1000 kg.',
+            'quantita.min' => 'La quantità minima deve essere di almeno 1 kg.'
         ]);
 
         $prenotazione = new Prenotazione($validated);
@@ -78,6 +78,41 @@ class PrenotazioneController extends Controller
             ]);
             throw $e;
         }
+    }
+
+    public function edit(Prenotazione $prenotazione)
+    {
+        $this->authorize('update', $prenotazione);
+        return view('prenotazioni.edit', compact('prenotazione'));
+    }
+
+    public function update(Request $request, Prenotazione $prenotazione)
+    {
+        $this->authorize('update', $prenotazione);
+
+        $validated = $request->validate([
+            'tipo_rifiuto' => 'required|string|max:50',
+            'quantita' => 'required|numeric|min:1|max:1000',
+            'data_ritiro' => [
+                'required',
+                'date',
+                'after:' . \Carbon\Carbon::now()->addDays(1)->format('Y-m-d')
+            ],
+            'note' => 'nullable|string|max:1000',
+        ], [
+            'data_ritiro.after' => 'La data del ritiro deve essere di almeno 2 giorni successiva alla data odierna.',
+            'quantita.max' => 'La quantità massima consentita è di 1000 kg.',
+            'quantita.min' => 'La quantità minima deve essere di almeno 1 kg.'
+        ]);
+
+        if ($prenotazione->stato !== 'in_attesa') {
+            return back()->with('error', 'Puoi modificare solo le prenotazioni in attesa.');
+        }
+
+        $prenotazione->update($validated);
+
+        return redirect()->route('prenotazioni.index')
+            ->with('success', 'Prenotazione aggiornata con successo!');
     }
 
     public function destroy(Prenotazione $prenotazione)

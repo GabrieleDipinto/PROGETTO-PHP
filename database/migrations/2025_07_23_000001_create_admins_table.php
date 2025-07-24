@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('punti_raccolta', function (Blueprint $table) {
-            $table->decimal('latitudine', 10, 8)->after('cap');
-            $table->decimal('longitudine', 11, 8)->after('latitudine');
+        Schema::create('admins', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('code', 10)->unique();
+            $table->timestamps(); // created_at e updated_at
         });
     }
 
@@ -22,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('punti_raccolta', function (Blueprint $table) {
-            $table->dropColumn(['latitudine', 'longitudine']);
-        });
+        Schema::dropIfExists('admins');
     }
-};
+}; 

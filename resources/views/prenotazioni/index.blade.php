@@ -70,10 +70,11 @@
                                             </td>
                                             @if($prenotazione->stato === 'in_attesa')
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <a href="{{ route('prenotazioni.edit', $prenotazione->id) }}" class="text-blue-600 hover:text-blue-900 mr-2 {{ $prenotazione->stato !== 'in_attesa' ? 'pointer-events-none opacity-50' : '' }}">Modifica</a>
                                                     <form method="POST" action="{{ route('prenotazioni.destroy', $prenotazione->id) }}" class="inline">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Sei sicuro di voler cancellare questa prenotazione?')">
+                                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Sei sicuro di voler cancellare questa prenotazione?')" {{ $prenotazione->stato !== 'in_attesa' ? 'disabled style=\'opacity:0.5;cursor:not-allowed;\'' : '' }}>
                                                             Cancella
                                                         </button>
                                                     </form>

@@ -26,7 +26,14 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->input('login_type') === 'admin') {
+            return [
+                'login_type' => ['required', 'in:user,admin'],
+                'admin_code' => ['required', 'string', 'max:10'],
+            ];
+        }
         return [
+            'login_type' => ['required', 'in:user,admin'],
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
@@ -39,17 +46,31 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
+        if ($this->input('login_type') === 'admin') {
+            // Autenticazione admin tramite codice
+            $admin = \App\Models\Admin::where('code', $this->input('admin_code'))->first();
+            if (!$admin) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'admin_code' => 'Codice admin non valido.',
+                ]);
+            }
+            // Non scrivo più la sessione qui!
+            return;
+        }
+        // Login utente classico
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        if (! \Illuminate\Support\Facades\Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            \Illuminate\Support\Facades\RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
+            throw \Illuminate\Validation\ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
 
-        RateLimiter::clear($this->throttleKey());
+        \Illuminate\Support\Facades\RateLimiter::clear($this->throttleKey());
+        // Rimuovi eventuale sessione admin precedente
+        session()->forget(['is_admin', 'admin_id', 'admin_name']);
     }
 
     /**

@@ -1,126 +1,125 @@
+@php
+    // Bootstrap 5 CDN (solo per questa pagina)
+@endphp
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="fw-bold display-6 text-dark mb-0">
             {{ __('La Mia Carta Fedeltà') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- Card principale della carta fedeltà -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Informazioni base -->
-                        <div class="col-span-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Stato Carta</h3>
-                            <div class="space-y-3">
-                                <p class="text-sm text-gray-600">
-                                    Numero Carta: <span class="font-medium">{{ str_pad($cartaFedelta->id, 8, '0', STR_PAD_LEFT) }}</span>
-                                </p>
-                                <p class="text-sm text-gray-600">
-                                    Data Attivazione: <span class="font-medium">{{ $cartaFedelta->data_attivazione->format('d/m/Y') }}</span>
-                                </p>
-                                <p class="text-sm text-gray-600">
-                                    Scadenza: <span class="font-medium">{{ $cartaFedelta->data_scadenza->format('d/m/Y') }}</span>
-                                </p>
-                                <p class="text-sm text-gray-600">
-                                    Stato: 
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $cartaFedelta->isAttiva() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                        {{ $cartaFedelta->isAttiva() ? 'Attiva' : 'Scaduta' }}
-                                    </span>
-                                </p>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <div class="py-5 bg-light min-vh-100">
+        <div class="container">
+            <div class="d-flex justify-content-end mb-4">
+                <a href="{{ route('premi') }}" class="btn btn-warning btn-lg fw-semibold shadow-sm">
+                    <i class="bi bi-gift me-2"></i>Scopri i premi disponibili
+                </a>
+            </div>
+            <div class="row g-4 mb-5">
+                <!-- Card Stato Carta -->
+                <div class="col-md-4">
+                    <div class="card shadow-lg border-0 h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3 text-primary">Stato Carta</h5>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2">Numero Carta: <span class="fw-bold">{{ str_pad($cartaFedelta->id, 8, '0', STR_PAD_LEFT) }}</span></li>
+                                <li class="mb-2">Attivazione: <span class="fw-bold">{{ $cartaFedelta->data_attivazione->format('d/m/Y') }}</span></li>
+                                <li class="mb-2">Scadenza: <span class="fw-bold">{{ $cartaFedelta->data_scadenza->format('d/m/Y') }}</span></li>
+                                <li class="mb-2">Stato: <span class="badge {{ $cartaFedelta->isAttiva() ? 'bg-success' : 'bg-danger' }}">{{ $cartaFedelta->isAttiva() ? 'Attiva' : 'Scaduta' }}</span></li>
+                            </ul>
+                            <div class="mb-2">
+                                <span class="fw-semibold">Saldo carta:</span>
+                                <span class="badge bg-warning text-dark fs-5 ms-2">€ {{ number_format($cartaFedelta->saldo_euro, 2, ',', '.') }}</span>
                             </div>
                         </div>
-
-                        <!-- Punti e livello -->
-                        <div class="col-span-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Punti e Livello</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <span class="text-3xl font-bold text-gray-900">{{ number_format($cartaFedelta->punti_accumulati) }}</span>
-                                    <span class="ml-2 text-sm text-gray-500">punti totali</span>
+                    </div>
+                </div>
+                <!-- Card Punti e Obiettivo -->
+                <div class="col-md-4">
+                    <div class="card shadow-lg border-0 h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3 text-primary">Punti e Obiettivo Premio</h5>
+                            <div class="mb-3">
+                                <span class="display-5 fw-bold text-dark">{{ number_format($cartaFedelta->punti_accumulati) }}</span>
+                                <span class="ms-2 text-secondary">punti</span>
+                            </div>
+                            <div class="mb-2">
+                                Livello attuale:
+                                <span class="badge 
+                                    @if($livello === 'Platino') bg-purple text-white
+                                    @elseif($livello === 'Oro') bg-warning text-dark
+                                    @elseif($livello === 'Argento') bg-secondary text-white
+                                    @else bg-info text-white
+                                    @endif">
+                                    {{ $livello }}
+                                </span>
+                            </div>
+                            @php
+                                $prossimiPremi = [1500 => 10, 2000 => 15, 5000 => 25];
+                                $punti = $cartaFedelta->punti_accumulati;
+                                $target = null;
+                                foreach(array_keys($prossimiPremi) as $soglia) {
+                                    if($punti < $soglia) { $target = $soglia; break; }
+                                }
+                            @endphp
+                            @if($target)
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted small">Prossimo premio: <span class="fw-bold">{{ $prossimiPremi[$target] }}€</span></span>
+                                        <span class="text-muted small">{{ $punti }}/{{ $target }} punti</span>
+                                    </div>
+                                    <div class="progress" style="height: 1.5rem;">
+                                        <div class="progress-bar bg-warning text-dark fw-bold" role="progressbar" style="width: {{ min(100, round($punti/$target*100)) }}%" aria-valuenow="{{ $punti }}" aria-valuemin="0" aria-valuemax="{{ $target }}">{{ min(100, round($punti/$target*100)) }}%</div>
+                                    </div>
+                                    <span class="text-muted small">Ti mancano <span class="fw-bold">{{ $target - $punti }}</span> punti per riscattare un buono da {{ $prossimiPremi[$target] }}€</span>
                                 </div>
-                                <p class="text-sm text-gray-600">
-                                    Livello attuale: 
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        @if($livello === 'Platino') bg-purple-100 text-purple-800
-                                        @elseif($livello === 'Oro') bg-yellow-100 text-yellow-800
-                                        @elseif($livello === 'Argento') bg-gray-100 text-gray-800
-                                        @else bg-blue-100 text-blue-800
-                                        @endif">
-                                        {{ $livello }}
-                                    </span>
-                                </p>
-                                @if($puntiProssimoLivello > 0)
-                                    <p class="text-sm text-gray-600">
-                                        Punti per il prossimo livello: <span class="font-medium">{{ $puntiProssimoLivello }}</span>
-                                    </p>
-                                @endif
-                            </div>
+                            @else
+                                <div class="mb-2">
+                                    <span class="text-success fw-semibold">Hai raggiunto il massimo premio disponibile!</span>
+                                </div>
+                            @endif
                         </div>
-
-                        <!-- Vantaggi del livello -->
-                        <div class="col-span-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Vantaggi {{ $livello }}</h3>
-                            <ul class="space-y-2 text-sm text-gray-600">
-                                @if($livello === 'Base')
-                                    <li>• 1 punto ogni 10kg di rifiuti</li>
-                                    <li>• Notifiche sullo stato dei ritiri</li>
-                                @elseif($livello === 'Argento')
-                                    <li>• 2 punti ogni 10kg di rifiuti</li>
-                                    <li>• Priorità nella scelta degli orari</li>
-                                    <li>• Notifiche personalizzate</li>
-                                @elseif($livello === 'Oro')
-                                    <li>• 3 punti ogni 10kg di rifiuti</li>
-                                    <li>• Priorità massima nei ritiri</li>
-                                    <li>• Assistenza dedicata</li>
-                                    <li>• Report mensile sostenibilità</li>
-                                @elseif($livello === 'Platino')
-                                    <li>• 5 punti ogni 10kg di rifiuti</li>
-                                    <li>• Servizio VIP con ritiro 24/7</li>
-                                    <li>• Consulente personale</li>
-                                    <li>• Report settimanale sostenibilità</li>
-                                    <li>• Accesso eventi esclusivi</li>
-                                @endif
+                    </div>
+                </div>
+                <!-- Card Vantaggi -->
+                <div class="col-md-4">
+                    <div class="card shadow-lg border-0 h-100">
+                        <div class="card-body text-center">
+                            <h5 class="card-title mb-3 text-primary">Vantaggi {{ $livello }}</h5>
+                            <ul class="list-unstyled text-start mx-auto" style="max-width: 250px;">
+                                <li>• 1 punto ogni 1 kg di rifiuti conferiti</li>
+                                <li>• Notifiche sullo stato dei ritiri</li>
+                                <li>• Premi riscattabili a 1500, 2000, 5000 punti</li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
-
             <!-- Ultime prenotazioni completate -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Ultimi Punti Guadagnati</h3>
+            <div class="card shadow-lg border-0 mt-5">
+                <div class="card-body">
+                    <h5 class="card-title mb-4 text-primary">Ultimi Punti Guadagnati</h5>
                     @if($ultimePrenotazioni->isEmpty())
-                        <p class="text-gray-500">Non hai ancora completato nessuna prenotazione.</p>
+                        <p class="text-muted">Non hai ancora completato nessuna prenotazione.</p>
                     @else
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead class="table-light">
                                     <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Rifiuto</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantità</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Punti</th>
+                                        <th>Data</th>
+                                        <th>Tipo Rifiuto</th>
+                                        <th>Quantità</th>
+                                        <th>Punti</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tbody>
                                     @foreach($ultimePrenotazioni as $prenotazione)
                                         <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $prenotazione->updated_at->format('d/m/Y') }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $prenotazione->tipo_rifiuto }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $prenotazione->quantita }} m³
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                +{{ floor($prenotazione->quantita * 10) }} punti
-                                            </td>
+                                            <td>{{ $prenotazione->updated_at->format('d/m/Y') }}</td>
+                                            <td>{{ $prenotazione->tipo_rifiuto }}</td>
+                                            <td>{{ $prenotazione->quantita }} kg</td>
+                                            <td>+{{ $prenotazione->quantita }} punti</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -131,4 +130,5 @@
             </div>
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </x-app-layout> 

@@ -24,9 +24,30 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        $isAdmin = false;
+        $adminData = null;
+
+        if ($request->input('login_type') === 'admin') {
+            $admin = \App\Models\Admin::where('code', $request->input('admin_code'))->first();
+            if ($admin) {
+                $isAdmin = true;
+                $adminData = $admin;
+            }
+        }
+
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // Solo ora scrivo la sessione admin!
+        if ($isAdmin && $adminData) {
+            $request->session()->put([
+                'is_admin' => true,
+                'admin_id' => $adminData->id,
+                'admin_name' => $adminData->name,
+            ]);
+            return redirect()->intended('/admin/dashboard');
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
@@ -36,11 +57,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        \Illuminate\Support\Facades\Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
+        // Pulisci la sessione admin
+        $request->session()->forget(['is_admin', 'admin_id', 'admin_name']);
 
         return redirect('/');
     }

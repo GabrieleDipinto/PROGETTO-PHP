@@ -75,6 +75,18 @@
                                                     -
                                                 @endif
                                             </td>
+                                            @if($segnalazione->stato === 'in_attesa')
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <a href="{{ route('segnalazioni.edit', $segnalazione->id) }}" class="text-blue-600 hover:text-blue-900 mr-2">Modifica</a>
+                                                    <form method="POST" action="{{ route('segnalazioni.destroy', $segnalazione->id) }}" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Sei sicuro di voler cancellare questa segnalazione?')">
+                                                            Elimina
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
